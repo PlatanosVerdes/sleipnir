@@ -16,7 +16,8 @@ class VpnApp extends LitElement {
 
   static styles = css`
     :host { display: block; max-width: 1080px; margin: 0 auto; padding: 24px 16px 48px; }
-    h1 { font-size: 22px; margin: 0 0 4px; letter-spacing: -.01em; }
+    h1 { font-size: 22px; margin: 0 0 4px; letter-spacing: -.01em; display: flex; align-items: center; gap: 10px; }
+    h1 img { border-radius: 7px; }
     .lede { color: var(--muted); font-size: 14px; margin: 0 0 18px; max-width: 65ch; }
     .note { color: var(--muted); font-size: 12px; margin-top: 28px; max-width: 72ch; }
   `;
@@ -116,7 +117,7 @@ class VpnApp extends LitElement {
   render() {
     const all = this.machines.flatMap((m) => (m.tunnels || []).map((t) => ({ machine: m.name, id: t.id, country: t.country, up: isUp(t) })));
     return html`
-      <h1>VPN Tunnels</h1>
+      <h1><img src="icon.svg" alt="" width="28" height="28">VPN Tunnels</h1>
       <p class="lede">Every tunnel on each machine. Pick where each one exits; whatever uses it keeps working through the change.</p>
       ${!this.loaded ? html`<p class="note">Loading tunnels…</p>`
         : !this.machines.length ? html`<p class="note">No machine answered.</p>`
@@ -200,7 +201,7 @@ class MachineRow extends LitElement {
 class TunnelCard extends LitElement {
   static properties = {
     machine: { attribute: false }, tunnel: { attribute: false }, op: { attribute: false }, all: { attribute: false },
-    picked: { state: true }, asking: { state: true },
+    picked: { state: true }, asking: { state: true }, help: { state: true },
   };
 
   static styles = css`
@@ -225,6 +226,11 @@ class TunnelCard extends LitElement {
     .chips span { background: var(--chip); border-radius: 6px; padding: 1px 8px; font-size: 12px; font-family: var(--font-data); }
     .whois { font-family: var(--font-data); font-size: 12px; line-height: 1.6; background: var(--chip); border-radius: 10px; padding: 10px 12px; margin-bottom: 12px; white-space: pre-wrap; }
     .whois b { color: var(--accent); font-weight: 500; }
+    .unchecked { display: flex; align-items: center; gap: 6px; color: var(--muted); }
+    .info { width: 20px; height: 20px; padding: 0; border-radius: 50%; font-size: 12px; font-weight: 700; font-family: var(--font-data); line-height: 1; color: var(--accent); }
+    .help { font-size: 13px; line-height: 1.5; background: var(--chip); border-radius: 10px; padding: 10px 12px; margin: -6px 0 12px; }
+    .help p { margin: 0 0 8px; }
+    .help pre { margin: 0; font-family: var(--font-data); font-size: 12px; white-space: pre-wrap; overflow-wrap: anywhere; }
     .err { color: var(--bad); font-size: 13px; margin: 0 0 10px; }
     .actions { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
     select, button { font: inherit; font-size: 14px; border-radius: 10px; padding: 9px 12px; }
@@ -253,6 +259,25 @@ class TunnelCard extends LitElement {
     @keyframes pulse { 50% { opacity: .45; } }
     @media (prefers-reduced-motion: reduce) { .spin, .dot.busy { animation: none; } .bar i, .banner, :host([flash]) { transition: none; } }
   `;
+
+  // renderHelp is what to add to compose so huginn checks this tunnel from inside it.
+  renderHelp(t) {
+    return html`<div class="help">
+      <p>Nothing checks where this tunnel really comes out; the exit above is what gluetun reports.
+      To have huginn ask from inside the tunnel, add to its compose file:</p>
+      <pre>huginn-${t.id}:
+  image: ghcr.io/platanosverdes/sleipnir:\${SLEIPNIR_VERSION}
+  command: ["huginn"]
+  network_mode: "service:${t.id}"
+
+# and on ${t.id} itself:
+${t.id}:
+  labels:
+    sleipnir.probe: "http://${t.id}:8080/json"</pre>
+      <p>huginn listens on 8080 inside the tunnel. If something already uses that port there, set
+      <code>LISTEN_ADDR=:8081</code> on huginn and use that port in the label.</p>
+    </div>`;
+  }
 
   get busy() {
     return !!this.asking || (this.picked && this.picked !== this.current);
@@ -296,7 +321,10 @@ class TunnelCard extends LitElement {
         <dt>Exit IP</dt><dd class="mono">${t.ip || "—"}</dd>
         <dt>Network</dt><dd>${t.org || "—"}${t.protocol ? ` · ${t.protocol}` : ""}</dd>
         <dt>Used by</dt><dd class="chips">${(t.used_by || []).length ? t.used_by.map((u) => html`<span>${u}</span>`) : "—"}</dd>
+        ${t.probe ? nothing : html`<dt>Checked</dt><dd class="unchecked">Not checked
+          <button class="info" aria-label="How to check this tunnel" aria-expanded=${!!this.help} @click=${() => { this.help = !this.help; }}>i</button></dd>`}
       </dl>
+      ${!t.probe && this.help ? this.renderHelp(t) : nothing}
       ${t.probe ? (t.probe.error
         ? html`<div class="whois">${t.used_by[0] || "probe"}: ${t.probe.error}</div>`
         : html`<div class="whois">${t.used_by[0] || "probe"} says:\n  country  <b>${t.probe.country}</b>\n  city     ${t.probe.city}\n  org      ${t.probe.org}</div>`) : nothing}
