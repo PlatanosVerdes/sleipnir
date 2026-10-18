@@ -16,8 +16,12 @@ class VpnApp extends LitElement {
 
   static styles = css`
     :host { display: block; max-width: 1080px; margin: 0 auto; padding: 24px 16px 48px; }
-    h1 { font-size: 22px; margin: 0 0 4px; letter-spacing: -.01em; display: flex; align-items: center; gap: 10px; }
-    h1 img { border-radius: 7px; }
+    h1 { margin: 0 0 6px; display: flex; align-items: center; gap: 12px; }
+    /* The logo is drawn in currentColor through a mask, so it follows the light and dark themes. */
+    .logo { width: 76px; height: 64px; background: currentColor; flex: none;
+      -webkit-mask: url(logo.svg) no-repeat center / contain; mask: url(logo.svg) no-repeat center / contain; }
+    .word { font-family: "Anton", var(--font-ui); font-weight: 400; font-size: 46px; line-height: 1; letter-spacing: .02em;
+      text-transform: uppercase; transform: skewX(-10deg); }
     .lede { color: var(--muted); font-size: 14px; margin: 0 0 18px; max-width: 65ch; }
     .note { color: var(--muted); font-size: 12px; margin-top: 28px; max-width: 72ch; }
   `;
@@ -117,8 +121,8 @@ class VpnApp extends LitElement {
   render() {
     const all = this.machines.flatMap((m) => (m.tunnels || []).map((t) => ({ machine: m.name, id: t.id, country: t.country, up: isUp(t) })));
     return html`
-      <h1><img src="icon.svg" alt="" width="28" height="28">VPN Tunnels</h1>
-      <p class="lede">Every tunnel on each machine. Pick where each one exits; whatever uses it keeps working through the change.</p>
+      <h1><span class="logo" aria-hidden="true"></span><span class="word">sleipnir</span></h1>
+      <p class="lede">VPN tunnels. Every tunnel on each machine. Pick where each one exits; whatever uses it keeps working through the change.</p>
       ${!this.loaded ? html`<p class="note">Loading tunnels…</p>`
         : !this.machines.length ? html`<p class="note">No machine answered.</p>`
         : repeat(this.machines, (m) => m.name, (m) => html`<machine-row .machine=${m} .ops=${this.ops} .all=${all}></machine-row>`)}
