@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VPN Tunnels</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<style>
+  /* Design tokens, read by every component through var(--…). */
+  :root {
+    --bg: #f3f4f6; --surface: #ffffff; --ink: #14171f; --muted: #626a78; --line: #dfe2e8; --chip: #eef0f4;
+    --accent: #2f5bea; --accent-ink: #ffffff; --ok: #138a4a; --warn: #b26a00; --bad: #c43535;
+    --font-ui: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --font-data: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #0f1218; --surface: #171b24; --ink: #e8ebf1; --muted: #9aa2b1; --line: #262c38; --chip: #20252f;
+      --accent: #6d8dff; --accent-ink: #0b0e14; --ok: #3cc47c; --warn: #f0b342; --bad: #ff7a7a; color-scheme: dark; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 var(--font-ui); }
+</style>
+<script type="module" src="app.js"></script>
+</head>
+<body>
+<vpn-app></vpn-app>
+</body>
+</html>
