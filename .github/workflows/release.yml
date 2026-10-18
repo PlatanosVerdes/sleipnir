@@ -1,7 +1,7 @@
 name: Release
 
 # Tags every push to main and publishes the arm64 image the Pi pulls. The steps live in
-# PlatanosVerdes/workflows, shared by every app.
+# PlatanosVerdes/workflows, shared by every app; once published, rpi-homeserver pins it.
 
 on:
   push:
@@ -14,3 +14,7 @@ permissions:
 jobs:
   release:
     uses: PlatanosVerdes/workflows/.github/workflows/release.yml@main
+    with:
+      deploy-repo: PlatanosVerdes/rpi-homeserver
+    secrets:
+      DEPLOY_TOKEN: ${{ secrets.DEPLOY_TOKEN }}
