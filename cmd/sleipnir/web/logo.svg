@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-8 -5 32 27">
+<mask id="neck" maskUnits="userSpaceOnUse" x="-20" y="-20" width="60" height="60"><rect x="-20" y="-20" width="60" height="60" fill="#fff"/><path d="M23 8V16L20 17L16.91 11.5C16.65 11.04 15.92 11.27 16 11.81L17 21L7 17L8.15 8.94C8.64 5.53 11.56 3 15 3H23L21.42 5.37C22.36 5.88 23 6.86 23 8" stroke="#000" stroke-width="1.3" stroke-linejoin="round"/></mask>
+<path mask="url(#neck)" d="M10.60 10.20Q4.70 2.90 -2.39 4.90L0.03 7.25L-1.87 7.49L0.91 9.34L-0.90 9.75L2.14 11.05L0.43 11.60L3.63 12.33L2.02 13.00L9.60 14.80Z" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+<path d="M23 8V16L20 17L16.91 11.5C16.65 11.04 15.92 11.27 16 11.81L17 21L7 17L8.15 8.94C8.64 5.53 11.56 3 15 3H23L21.42 5.37C22.36 5.88 23 6.86 23 8" fill="currentColor"/>
+</svg>
