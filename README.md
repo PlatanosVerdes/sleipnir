@@ -53,7 +53,8 @@ huginn:
 | `LISTEN_ADDR` | `:8090` (sleipnir), `:8080` (huginn) | Where each one serves its page |
 
 The logo is a winged horse for Sleipnir: the head is Material Design Icons' `horse-variant-fast`
-(Pictogrammers, Apache 2.0) without its speed lines, with a five-feather wing drawn to match it. The
+(Pictogrammers, Apache 2.0) without its speed lines, and the wing is taken from
+[game-icons.net](https://game-icons.net)'s "pegasus" by Skoll (CC BY 3.0). The
 title is set in Anton, slanted, from Google Fonts like the rest of the page's type.
 
 The page is built from Lit components (one class per piece), with Lit vendored and served by
