@@ -107,7 +107,7 @@ func (l *lookup) fetch(url string, out any) error {
 
 var page = template.Must(template.New("page").Parse(`<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>huginn</title>
+<title>Huginn</title>
 <style>
   :root { --bg:#f3f4f6; --ink:#14171f; --muted:#626a78; --accent:#2f5bea; --bad:#c43535; }
   @media (prefers-color-scheme: dark) { :root { --bg:#0f1218; --ink:#e8ebf1; --muted:#9aa2b1; --accent:#6d8dff; --bad:#ff7a7a; color-scheme: dark; } }
