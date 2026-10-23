@@ -1,4 +1,13 @@
-# sleipnir
+<p align="center">
+  <img src="cmd/sleipnir/web/icon.svg" width="96" alt="">
+</p>
+
+<h1 align="center">sleipnir</h1>
+
+<p align="center">
+  <a href="https://github.com/PlatanosVerdes/sleipnir/tags"><img src="https://img.shields.io/github/v/tag/PlatanosVerdes/sleipnir?label=release&color=2f7d3a" alt="Latest release"></a>
+  <img src="https://img.shields.io/github/go-mod/go-version/PlatanosVerdes/sleipnir" alt="Go version">
+</p>
 
 A panel for gluetun VPN tunnels: every tunnel on the machine (and, optionally, on other machines),
 where it exits, what uses it, and a way to move it to another country or server without restarting
