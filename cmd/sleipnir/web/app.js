@@ -201,7 +201,7 @@ class MachineRow extends LitElement {
 }
 
 // <tunnel-card> shows one tunnel, or its switch while one runs. It keeps only UI state (the
-// country picked, the confirm line); the switch itself is <vpn-app>'s.
+// country picked, the open confirm); the switch itself is <vpn-app>'s.
 class TunnelCard extends LitElement {
   static properties = {
     machine: { attribute: false }, tunnel: { attribute: false }, op: { attribute: false }, all: { attribute: false },
@@ -297,6 +297,25 @@ ${t.id}:
     this.toggleAttribute("flash", !!(this.op && this.op.flash));
   }
 
+  ask(kind, target) {
+    const t = this.tunnel;
+    const users = (t.used_by || []).length ? t.used_by.join(", ") : "Whatever uses it";
+    const from = t.ip ? `${t.city ? t.city + ", " : ""}${t.country}` : "";
+    this.asking = kind === "switch" ? {
+      kind, target, action: "Switch",
+      heading: `Switch ${t.id} to ${target}?`,
+      text: `${from ? `It exits through ${from} now. ` : ""}${users} keeps working; open connections drop for a few seconds while it reconnects.`,
+    } : kind === "another" ? {
+      kind, target, action: "Reconnect",
+      heading: `Another server in ${target}?`,
+      text: `${t.id} reconnects through a different server in the same country. ${users} may lose open connections for a few seconds.`,
+    } : {
+      kind, target: "", action: "Stop", danger: true,
+      heading: `Stop ${t.id}?`,
+      text: `${users} has no internet until the tunnel is started again.`,
+    };
+  }
+
   act(kind, target) {
     this.asking = null;
     this.picked = null;
@@ -339,13 +358,15 @@ ${t.id}:
             <select aria-label="Exit country for ${t.id}" @change=${(e) => { this.picked = e.target.value; }}>
               ${(this.machine.countries || []).map((c) => html`<option value=${c.name} ?selected=${c.name === picked}>${flagOf(c.name)} ${c.name} · ${c.servers} servers</option>`)}
             </select>
-            <button class="primary" type="button" ?disabled=${picked === this.current} @click=${() => { this.asking = { text: `Switch to ${picked}?`, kind: "switch", target: picked }; }}>Switch</button>
+            <button class="primary" type="button" ?disabled=${picked === this.current} @click=${() => this.ask("switch", picked)}>Switch</button>
           </div>
           <div class="row2">
-            <button type="button" @click=${() => { this.asking = { text: `Another server in ${t.country || this.current}?`, kind: "another", target: t.country || this.current }; }}>Another server</button>
-            <button type="button" @click=${() => { this.asking = { text: `Stop ${t.id}?`, kind: "stop", target: "" }; }}>Stop</button>
+            <button type="button" @click=${() => this.ask("another", t.country || this.current)}>Another server</button>
+            <button type="button" @click=${() => this.ask("stop")}>Stop</button>
           </div>
-          ${this.asking ? html`<confirm-line .text=${this.asking.text} @confirm=${() => this.act(this.asking.kind, this.asking.target)} @cancel=${() => { this.asking = null; }}></confirm-line>` : nothing}
+          ${this.asking ? html`<confirm-dialog .heading=${this.asking.heading} .text=${this.asking.text} .action=${this.asking.action} ?danger=${this.asking.danger}
+            .warn=${this.asking.kind === "switch" && clash ? `${clash.id} on ${clash.machine} already exits through ${picked} on the same account.` : ""}
+            @confirm=${() => this.act(this.asking.kind, this.asking.target)} @cancel=${() => { this.asking = null; }}></confirm-dialog>` : nothing}
           <div class="warnline">${clash ? `${clash.id} on ${clash.machine} already exits through ${picked} on the same account.` : ""}</div>`}
       ${op && op.banner ? html`<div class="banner ${op.error ? "bad" : "ok"} ${op.fading ? "gone" : ""}">${op.error ? nothing : tickIcon}<span>${op.banner}</span></div>` : nothing}`;
   }
@@ -369,26 +390,57 @@ ${t.id}:
   }
 }
 
-// <confirm-line> is the one-line Yes/No before an action.
-class ConfirmLine extends LitElement {
-  static properties = { text: {} };
+// <confirm-dialog> is the modal before an action; Esc, Cancel or a click on the backdrop cancel it.
+class ConfirmDialog extends LitElement {
+  static properties = { heading: {}, text: {}, warn: {}, action: {}, danger: { type: Boolean } };
 
   static styles = css`
-    :host { display: flex; align-items: center; gap: 8px; margin-top: 10px; font-size: 13px; }
-    p { margin: 0; flex: 1; min-width: 0; }
-    button { font: inherit; font-size: 13px; border-radius: 10px; padding: 6px 12px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; }
+    dialog { width: min(420px, calc(100vw - 32px)); padding: 0; border: 1px solid var(--line); border-radius: 16px;
+      background: var(--surface); color: var(--ink); font: 15px/1.5 var(--font-ui); box-shadow: 0 24px 60px rgb(0 0 0 / .28); }
+    dialog::backdrop { background: rgb(10 12 18 / .45); backdrop-filter: blur(2px); }
+    dialog[open] { animation: rise .16s ease-out; }
+    dialog[open]::backdrop { animation: fade .16s ease-out; }
+    .box { padding: 22px 22px 18px; }
+    h2 { margin: 0 0 8px; font-size: 18px; font-weight: 700; letter-spacing: -.01em; }
+    p { margin: 0; color: var(--muted); font-size: 14px; }
+    .warn { color: var(--warn); margin-top: 10px; }
+    .buttons { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; }
+    button { font: inherit; font-size: 14px; border-radius: 10px; padding: 9px 16px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; }
     button.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 600; }
+    button.danger { background: var(--bad); color: var(--accent-ink); border-color: var(--bad); font-weight: 600; }
     button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    @keyframes rise { from { opacity: 0; transform: translateY(8px) scale(.98); } }
+    @keyframes fade { from { opacity: 0; } }
+    @media (prefers-reduced-motion: reduce) { dialog[open], dialog[open]::backdrop { animation: none; } }
   `;
 
+  firstUpdated() {
+    this.renderRoot.querySelector("dialog").showModal();
+  }
+
+  done(name) {
+    this.renderRoot.querySelector("dialog").close();
+    this.dispatchEvent(new CustomEvent(name));
+  }
+
   render() {
-    return html`<p>${this.text}</p>
-      <button type="button" class="primary" @click=${() => this.dispatchEvent(new CustomEvent("confirm"))}>Yes</button>
-      <button type="button" @click=${() => this.dispatchEvent(new CustomEvent("cancel"))}>No</button>`;
+    // The dialog has no padding, so a click whose target is the dialog itself landed on the backdrop.
+    return html`<dialog aria-labelledby="h" aria-describedby="d" @cancel=${(e) => { e.preventDefault(); this.done("cancel"); }}
+        @click=${(e) => { if (e.target === e.currentTarget) this.done("cancel"); }}>
+      <div class="box">
+        <h2 id="h">${this.heading}</h2>
+        <p id="d">${this.text}</p>
+        ${this.warn ? html`<p class="warn">${this.warn}</p>` : nothing}
+        <div class="buttons">
+          <button type="button" ?autofocus=${this.danger} @click=${() => this.done("cancel")}>Cancel</button>
+          <button type="button" class=${this.danger ? "danger" : "primary"} ?autofocus=${!this.danger} @click=${() => this.done("confirm")}>${this.action}</button>
+        </div>
+      </div>
+    </dialog>`;
   }
 }
 
 customElements.define("vpn-app", VpnApp);
 customElements.define("machine-row", MachineRow);
 customElements.define("tunnel-card", TunnelCard);
-customElements.define("confirm-line", ConfirmLine);
+customElements.define("confirm-dialog", ConfirmDialog);
