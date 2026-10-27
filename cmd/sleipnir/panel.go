@@ -33,8 +33,9 @@ type country struct {
 }
 
 type peer struct {
-	Name string
-	URL  string
+	Name  string
+	URL   string
+	Token string // the peer's own SLEIPNIR_TOKEN; empty means it shares ours
 }
 
 type probeResult struct {
@@ -316,7 +317,11 @@ func (p *panel) peerCall(pr peer, method, path string, body []byte, out any) err
 	if err != nil {
 		return err
 	}
-	req.Header.Set("X-Panel-Token", p.token)
+	token := pr.Token
+	if token == "" {
+		token = p.token
+	}
+	req.Header.Set("X-Panel-Token", token)
 	req.Header.Set("Content-Type", "application/json")
 	resp, err := p.client.Do(req)
 	if err != nil {
@@ -465,6 +470,23 @@ func parsePeers(s string) []peer {
 		}
 	}
 	return out
+}
+
+// withPeerTokens reads "name=token,..." so each machine can keep a token of its own, and one that
+// leaks does not open the others.
+func withPeerTokens(peers []peer, s string) []peer {
+	for _, item := range splitList(s) {
+		name, token, ok := strings.Cut(item, "=")
+		if !ok {
+			continue
+		}
+		for i := range peers {
+			if peers[i].Name == name {
+				peers[i].Token = token
+			}
+		}
+	}
+	return peers
 }
 
 func splitList(s string) []string {

@@ -160,6 +160,26 @@ func TestPeerTokenIsRequired(t *testing.T) {
 	}
 }
 
+func TestEachPeerGetsItsOwnToken(t *testing.T) {
+	var got []string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		got = append(got, r.Header.Get("X-Panel-Token"))
+		w.Write([]byte("{}"))
+	}))
+	defer srv.Close()
+	p := &panel{token: "ours", client: srv.Client()}
+	p.peers = withPeerTokens(parsePeers("streamhalla="+srv.URL+",other="+srv.URL), "streamhalla=theirs, unknown=x")
+	for _, pr := range p.peers {
+		var out map[string]any
+		if err := p.peerCall(pr, http.MethodGet, "/api/tunnels", nil, &out); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if strings.Join(got, ",") != "theirs,ours" {
+		t.Errorf("tokens sent = %v", got)
+	}
+}
+
 func TestUnreachablePeerShowsAsNoAnswer(t *testing.T) {
 	g := &fakeGluetun{key: "k", status: "running", country: "Turkey", ip: "1.2.3.4"}
 	p := newTestPanel(t, g, map[string]string{"sleipnir.enable": "true"})
