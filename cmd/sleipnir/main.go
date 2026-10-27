@@ -3,7 +3,7 @@
 // beyond the labels on the gluetun container, so it works for any tunnel added later.
 //
 // Two listeners: one for the browser, behind Caddy like every other page here, and one for the
-// panels on other machines, which carries a shared token because it is reachable over Tailscale.
+// panels on other machines, which requires a token because it is reachable over Tailscale.
 package main
 
 import (
@@ -33,7 +33,7 @@ func main() {
 		docker:      &dockerClient{base: strings.TrimRight(getenv("DOCKER_HOST_URL", "http://docker-socket-proxy:2375"), "/")},
 		apiKey:      os.Getenv("GLUETUN_API_KEY"),
 		countries:   loadCountries(getenv("SERVERS_FILE", "/servers.json")),
-		peers:       parsePeers(os.Getenv("SLEIPNIR_PEERS")),
+		peers:       withPeerTokens(parsePeers(os.Getenv("SLEIPNIR_PEERS")), os.Getenv("SLEIPNIR_PEER_TOKENS")),
 		token:       os.Getenv("SLEIPNIR_TOKEN"),
 		client:      &http.Client{Timeout: 8 * time.Second},
 		controlPort: getenv("GLUETUN_CONTROL_PORT", "8000"),
